@@ -1,0 +1,4 @@
+.vscode
+apps/__pycache__
+python/needle/__pycache__
+tests/__pycache__
