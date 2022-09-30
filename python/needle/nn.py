@@ -199,7 +199,6 @@ class BatchNorm1d(Module):
             self.running_var = self.momentum * var + (
                 1 - self.momentum) * self.running_var
             return ret
-
         else:
             mean = ops.broadcast_to(self.running_mean, x.shape)
             var = ((x - mean)**2).sum(0).reshape((1, n_feature)) / n
@@ -242,7 +241,15 @@ class Dropout(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        shape = x.shape
+        mask = init.randb(*shape, p = self.p)   
+        if self.training:
+            x = mask * x
+            x = x/(1-self.p)
+            return x
+        else:
+            # idenity function in eval mode
+            return x
         ### END YOUR SOLUTION
 
 
