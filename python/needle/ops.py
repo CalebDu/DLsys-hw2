@@ -203,7 +203,8 @@ class BroadcastTo(TensorOp):
             grad = summation(grad, axes=0)
         for i, dim in enumerate(ipt.shape):
             if dim == 1:
-                grad = summation(grad, axes=i)
+                grad = grad.cached_data.sum(axis=i, keepdims=True)
+            grad = Tensor(grad)
 
         grad = reshape(grad, ipt.shape)
         return [grad]
