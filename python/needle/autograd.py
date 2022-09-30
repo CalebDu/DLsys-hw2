@@ -39,8 +39,10 @@ class CPUDevice(Device):
         return array_api.random.randn(*shape)
     def ones(self, *shape):
         return array_api.ones(*shape)
-    # def one_hot(n, i):
-    #     mask = array_api.zeros()
+    def one_hot(self, n, i, dtype):
+        mask = array_api.zeros((n, i.max()+1), dtype=dtype)
+        mask[range(n), i] = 1
+        return mask
 
 def cpu():
     """Return cpu device"""
