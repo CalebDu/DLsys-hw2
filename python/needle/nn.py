@@ -95,7 +95,11 @@ class Linear(Module):
 
     def forward(self, X: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        n = X.shape[0]
+        ret = ops.matmul(X, self.weight)
+        if self.bias != None:
+            ret += ops.broadcast_to(self.bias, ret.shape)
+        return ret 
         ### END YOUR SOLUTION
 
 

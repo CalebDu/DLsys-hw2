@@ -86,7 +86,9 @@ class PowerScalar(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        ipt = node.inputs[0]
+        grad = out_grad * self.scalar * power_scalar(ipt, self.scalar - 1)
+        return [grad]
         ### END YOUR SOLUTION
 
 
@@ -169,7 +171,10 @@ class Reshape(TensorOp):
 
     def compute(self, a):
         ### BEGIN YOUR SOLUTION
-        return a.reshape(self.shape)
+        if isinstance(a, array_api.ndarray):
+            return a.reshape(self.shape)
+        else:
+            return array_api.array([a]).reshape(self.shape)
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
@@ -192,27 +197,15 @@ class BroadcastTo(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        ipt, scalar = node.inputs[0], 1
-        axis = []
-        for i in range(len(out_grad.shape)):
-            if i >= len(ipt.shape):
-                # scalar *= out_grad.shape[i]
-                axis.append(i)
-            elif out_grad.shape[i] != ipt.shape[i]:
-                # scalar *= out_grad.shape[i]
-                axis.append(i)
+        ipt = node.inputs[0]
+        grad = out_grad
+        for _ in range(len(out_grad.shape) - len(ipt.shape)):
+            grad = summation(grad, axes=0)
+        for i, dim in enumerate(ipt.shape):
+            if dim == 1:
+                grad = summation(grad, axes=i)
 
-        # for idx, s1, s2 in enumerate(zip(ipt.shape, out_grad.shape)):
-        #     if s1 is not s2:
-        #         axis.append(idx)
-        #         scalar *= s2
-
-        # for i in range(idx + 1, len(out_grad.shape)):
-        #     axis.append(i)
-        #     scalar *= out_grad.shape[i]
-        grad = summation(out_grad, tuple(axis)) / scalar
         grad = reshape(grad, ipt.shape)
-        assert (grad.shape == ipt.shape)
         return [grad]
         ### END YOUR SOLUTION
 
@@ -234,16 +227,22 @@ class Summation(TensorOp):
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
         ipt = node.inputs[0]
-        shape = list(out_grad.shape)
         if self.axes:
+            grad = array_api.expand_dims(out_grad.cached_data, self.axes)
             if isinstance(self.axes, int):
-                shape.insert(self.axes, 1)
+                repeat = ipt.shape[self.axes]
+                grad = array_api.repeat(grad, repeat, self.axes)
             else:
-                for axis in self.axes:
-                    shape.insert(axis, 1)
+                repeat = []
+                for i in self.axes:
+                    repeat.append(ipt.shape[i])
+                for r, a in zip(repeat, self.axes):
+                    grad = array_api.repeat(grad, r, a)
+        else:
+            grad = array_api.ones_like(ipt.cached_data) * out_grad.cached_data
 
-        grad = broadcast_to(reshape(out_grad, shape), ipt.shape) * Tensor(
-            array_api.ones(ipt.shape))
+        grad = Tensor(grad)
+
         return [grad]
         ### END YOUR SOLUTION
 
