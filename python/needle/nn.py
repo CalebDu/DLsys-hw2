@@ -171,14 +171,43 @@ class BatchNorm1d(Module):
         self.eps = eps
         self.momentum = momentum
         ### BEGIN YOUR SOLUTION
-        self.weight = Tensor(1, device=device, dtype=dtype)
-        self.bias = Tensor(1, device=device, dtype=dtype)
-
+        self.weight = Tensor(np.ones((1, dim)), device=device, dtype=dtype)
+        self.bias = Tensor(np.zeros((1, dim)), device=device, dtype=dtype)
+        self.running_mean = Tensor(np.zeros((dim)),
+                                   device=device,
+                                   dtype=dtype)
+        self.running_var = Tensor(np.ones((dim)),
+                                  device=device,
+                                  dtype=dtype)
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # self.bias = self.bias.reshape((1, self.dim))
+        # self.weight = self.weight.reshape((1, self.dim))
+        n, n_feature = x.shape[0], x.shape[1]
+        if self.training:
+            m = (x.sum(0) / n)
+            mean = ops.broadcast_to(m, x.shape)
+            var = ((x - mean)**2).sum(0)/ n
+            ret = (x - mean) / ops.broadcast_to(
+                ops.power_scalar(var + self.eps, 0.5), x.shape
+            ) * ops.broadcast_to(self.weight, x.shape) + ops.broadcast_to(
+                self.bias, x.shape)
+            self.running_mean = self.momentum * m + (
+                1 - self.momentum) * self.running_mean
+            self.running_var = self.momentum * var + (
+                1 - self.momentum) * self.running_var
+            return ret
+
+        else:
+            mean = ops.broadcast_to(self.running_mean, x.shape)
+            var = ((x - mean)**2).sum(0).reshape((1, n_feature)) / n
+            ret = (x - mean) / ops.broadcast_to(
+                ops.power_scalar(var + self.eps, 0.5), x.shape
+            ) * ops.broadcast_to(self.weight, x.shape) + ops.broadcast_to(
+                self.bias, x.shape)
+            return ret
         ### END YOUR SOLUTION
 
 
