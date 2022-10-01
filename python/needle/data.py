@@ -1,3 +1,4 @@
+from matplotlib.pyplot import axis
 import numpy as np
 from .autograd import Tensor
 import struct
@@ -116,10 +117,10 @@ class DataLoader:
                 np.arange(len(dataset)),
                 range(batch_size, len(dataset), batch_size))
         else:
+            arr = np.arange(len(dataset))
+            np.random.shuffle(arr)
             self.ordering = np.array_split(
-                np.random.shuffle(np.arange(len(dataset))),
-                range(batch_size,
-                      len(dataset).batch_size))
+                arr, range(batch_size, len(dataset), batch_size))
         self.idx = -1
 
     def __iter__(self):
@@ -133,9 +134,9 @@ class DataLoader:
         self.idx += 1
         if self.idx >= len(self.ordering):
             raise StopIteration()
-        idx = self.ordering[self.idx]
-        samples = [self.dataset[i] for i in idx]
-        samples = list(zip(*samples))
+        samples = self.dataset[self.ordering[self.idx]]
+        # samples = list(zip(*samples))
+        # ret = [np.concatenate([x]) for x in samples]
         return [Tensor(x) for x in samples]
 
         ### END YOUR SOLUTION
@@ -164,11 +165,18 @@ class MNISTDataset(Dataset):
 
     def __getitem__(self, index) -> object:
         ### BEGIN YOUR SOLUTION
-        img = self.images[index].reshape((28, 28, 1))
+        if isinstance(index, (Iterable, slice)):
+            img = [i.reshape((28, 28, 1)) for i in self.images[index]]
+        # elif isinstance(index, slice):
+        #     img = [i.reshape((28, 28, 1)) for i in self.images[index]]
+        else:
+            img = [self.images[index].reshape((28, 28, 1))]
+
         if self.transforms:
             for tsf in self.transforms:
-                img = tsf(img)
-        return [img, self.labels[index]]
+                img = [tsf(x) for x in img]
+
+        return [np.stack(img), self.labels[index]]
         ### END YOUR SOLUTION
 
     def __len__(self) -> int:
