@@ -151,7 +151,7 @@ class SoftmaxLoss(Module):
     def forward(self, logits: Tensor, y: Tensor):
         ### BEGIN YOUR SOLUTION
         n = logits.shape[0]
-        label = init.one_hot(n, y)
+        label = init.one_hot(logits.shape, i=y)
         x = ops.exp(logits).sum(1)
         y = ops.log(x).sum()
         z = (logits * label).sum()
@@ -220,8 +220,10 @@ class LayerNorm1d(Module):
         self.dim = dim
         self.eps = eps
         ### BEGIN YOUR SOLUTION
-        self.weight = Tensor(np.ones((dim)), device=device, dtype=dtype)
-        self.bias = Tensor(np.zeros((dim)), device=device, dtype=dtype)
+        self.weight = Parameter(
+            Tensor(np.ones((dim)), device=device, dtype=dtype))
+        self.bias = Parameter(
+            Tensor(np.zeros((dim)), device=device, dtype=dtype))
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
