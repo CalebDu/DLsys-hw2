@@ -5,12 +5,14 @@ from typing import Iterator, Optional, List, Sized, Union, Iterable, Any
 
 
 class Transform:
+
     def __call__(self, x):
         raise NotImplementedError
 
 
 class RandomFlipHorizontal(Transform):
-    def __init__(self, p = 0.5):
+
+    def __init__(self, p=0.5):
         self.p = p
 
     def __call__(self, img):
@@ -25,13 +27,14 @@ class RandomFlipHorizontal(Transform):
         flip_img = np.random.rand() < self.p
         ### BEGIN YOUR SOLUTION
         if flip_img:
-            return img[:,::-1, :]
+            return img[:, ::-1, :]
         else:
             return img
         ### END YOUR SOLUTION
 
 
 class RandomCrop(Transform):
+
     def __init__(self, padding=3):
         self.padding = padding
 
@@ -43,9 +46,18 @@ class RandomCrop(Transform):
             H x W x C NAArray of cliped image
         Note: generate the image shifted by shift_x, shift_y specified below
         """
-        shift_x, shift_y = np.random.randint(low=-self.padding, high=self.padding+1, size=2)
+        shift_x, shift_y = np.random.randint(low=-self.padding,
+                                             high=self.padding + 1,
+                                             size=2)
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        h, w, c = img.shape
+        pad = np.zeros((h + 2 * self.padding, w + 2 * self.padding, c))
+        pad[self.padding:self.padding + h,
+            self.padding:self.padding + w, :] = img
+        x = self.padding + shift_x
+        y = self.padding + shift_y
+        crop = pad[x:x + h, y:y + w, :]
+        return crop
         ### END YOUR SOLUTION
 
 
@@ -99,12 +111,13 @@ class DataLoader:
         self.shuffle = shuffle
         self.batch_size = batch_size
         if not self.shuffle:
-            self.ordering = np.array_split(np.arange(len(dataset)), 
-                                           range(batch_size, len(dataset), batch_size))
+            self.ordering = np.array_split(
+                np.arange(len(dataset)),
+                range(batch_size, len(dataset), batch_size))
 
     def __iter__(self):
         ### BEGIN YOUR SOLUTION ###
-        raise NotImplementedError() ###
+        raise NotImplementedError()  ###
         ### END YOUR SOLUTION
         return self
 
@@ -115,6 +128,7 @@ class DataLoader:
 
 
 class MNISTDataset(Dataset):
+
     def __init__(
         self,
         image_filename: str,
@@ -135,7 +149,9 @@ class MNISTDataset(Dataset):
         raise NotImplementedError()
         ### END YOUR SOLUTION
 
+
 class NDArrayDataset(Dataset):
+
     def __init__(self, *arrays):
         self.arrays = arrays
 
