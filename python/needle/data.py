@@ -24,7 +24,10 @@ class RandomFlipHorizontal(Transform):
         """
         flip_img = np.random.rand() < self.p
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        if flip_img:
+            return img[:,::-1, :]
+        else:
+            return img
         ### END YOUR SOLUTION
 
 
