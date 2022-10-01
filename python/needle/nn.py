@@ -94,9 +94,11 @@ class Linear(Module):
         self.out_features = out_features
 
         ### BEGIN YOUR SOLUTION
-        self.weight = init.kaiming_uniform(self.in_features, self.out_features)
-        self.bias = init.kaiming_uniform(self.out_features, 1).reshape(
-            (1, self.out_features)) if bias else None
+        self.weight = Parameter(
+            init.kaiming_uniform(self.in_features, self.out_features))
+        self.bias = Parameter(
+            init.kaiming_uniform(self.out_features, 1).reshape(
+                (1, self.out_features))) if bias else None
 
         ### END YOUR SOLUTION
 
@@ -171,10 +173,16 @@ class BatchNorm1d(Module):
         self.eps = eps
         self.momentum = momentum
         ### BEGIN YOUR SOLUTION
-        self.weight = Tensor(np.ones((1, dim)), device=device, dtype=dtype)
-        self.bias = Tensor(np.zeros((1, dim)), device=device, dtype=dtype)
-        self.running_mean = Tensor(np.zeros((dim)), device=device, dtype=dtype)
-        self.running_var = Tensor(np.ones((dim)), device=device, dtype=dtype)
+        self.weight = Parameter(np.ones((dim)), device=device, dtype=dtype)
+        self.bias = Parameter(np.zeros((dim)), device=device, dtype=dtype)
+        self.running_mean = Tensor(np.zeros((dim)),
+                                   device=device,
+                                   dtype=dtype,
+                                   requires_grad=False)
+        self.running_var = Tensor(np.ones((dim)),
+                                  device=device,
+                                  dtype=dtype,
+                                  requires_grad=False)
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
@@ -182,26 +190,25 @@ class BatchNorm1d(Module):
         # self.bias = self.bias.reshape((1, self.dim))
         # self.weight = self.weight.reshape((1, self.dim))
         n, n_feature = x.shape[0], x.shape[1]
+        w = ops.broadcast_to(self.weight, x.shape)
+        b = ops.broadcast_to(self.bias, x.shape)
         if self.training:
             m = (x.sum(0) / n)
             mean = ops.broadcast_to(m, x.shape)
-            var = ((x - mean)**2).sum(0) / n
-            ret = (x - mean) / ops.broadcast_to(
-                ops.power_scalar(var + self.eps, 0.5), x.shape
-            ) * ops.broadcast_to(self.weight, x.shape) + ops.broadcast_to(
-                self.bias, x.shape)
+            v = ((x - mean)**2).sum(0) / n
+            var = ops.broadcast_to(v, x.shape)
+            ret = w * (x - mean) / ((var + self.eps)**0.5) + b
+
             self.running_mean = self.momentum * m + (
                 1 - self.momentum) * self.running_mean
-            self.running_var = self.momentum * var + (
+            self.running_var = self.momentum * v + (
                 1 - self.momentum) * self.running_var
             return ret
         else:
             mean = ops.broadcast_to(self.running_mean, x.shape)
             var = ((x - mean)**2).sum(0).reshape((1, n_feature)) / n
             ret = (x - mean) / ops.broadcast_to(
-                ops.power_scalar(var + self.eps, 0.5), x.shape
-            ) * ops.broadcast_to(self.weight, x.shape) + ops.broadcast_to(
-                self.bias, x.shape)
+                ops.power_scalar(var + self.eps, 0.5), x.shape) * w + b
             return ret
         ### END YOUR SOLUTION
 
