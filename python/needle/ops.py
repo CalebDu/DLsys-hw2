@@ -358,19 +358,53 @@ def relu(a):
     return ReLU()(a)
 
 
-
 class LogSumExp(TensorOp):
+
     def __init__(self, axes: Optional[tuple] = None):
         self.axes = axes
 
     def compute(self, Z):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        maxz = array_api.max(Z, axis=self.axes, keepdims=1)
+        ret = array_api.log(
+            array_api.exp(Z - maxz).sum(axis=self.axes, keepdims=1)) + maxz
+        return array_api.squeeze(ret)
+
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        
+        ipt = node.inputs[0].cached_data
+        maxz = array_api.max(ipt, axis=self.axes, keepdims=1)
+        mask = (ipt==maxz)
+
+        ez = array_api.exp(ipt-maxz)
+        sez = array_api.sum(ez, self.axes)
+        lsez = array_api.log(sez) + maxz.squeeze()
+
+        d_lsez = out_grad.cached_data
+        d_sez = d_lsez / sez
+
+        if self.axes:
+            d_ez = array_api.expand_dims(d_sez, self.axes)
+            if isinstance(self.axes, int):
+                repeat = ez.shape[self.axes]
+                d_ez = array_api.repeat(d_ez, repeat, self.axes)
+            else:
+                repeat = []
+                for i in self.axes:
+                    repeat.append(ipt.shape[i])
+                for r, a in zip(repeat, self.axes):
+                    d_ez = array_api.repeat(d_ez, r, a)
+        else:
+            d_ez = array_api.ones_like(ez) * d_sez
+
+        d_z = d_ez * (ez)
+
+        return [Tensor(d_z)]
+
+
         ### END YOUR SOLUTION
 
 
