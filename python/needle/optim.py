@@ -1,9 +1,11 @@
 """Optimization module"""
+from math import sqrt
 import needle as ndl
 import numpy as np
 
 
 class Optimizer:
+
     def __init__(self, params):
         self.params = params
 
@@ -16,6 +18,7 @@ class Optimizer:
 
 
 class SGD(Optimizer):
+
     def __init__(self, params, lr=0.01, momentum=0.0, weight_decay=0.0):
         super().__init__(params)
         self.lr = lr
@@ -25,11 +28,20 @@ class SGD(Optimizer):
 
     def step(self):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        for para in self.params:
+            u = self.u.get(para)
+            grad = para.grad.detach()
+            u_new = grad * (1 - self.momentum) + self.momentum * (
+                0 if u == None else u)
+            id = para.detach()
+            self.u[para] = u_new
+            d_para = u_new + self.weight_decay * id
+            para.cached_data -= (self.lr * d_para).cached_data
         ### END YOUR SOLUTION
 
 
 class Adam(Optimizer):
+
     def __init__(
         self,
         params,
@@ -52,5 +64,26 @@ class Adam(Optimizer):
 
     def step(self):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        self.t += 1
+        for para in self.params:
+            m = self.m.get(para)
+            v = self.v.get(para)
+            grad = para.grad.detach()
+            m_new = (1 -
+                     self.beta1) * grad + self.beta1 * (0 if m == None else m)
+            v_new = (1 - self.beta2) * (grad**2) + self.beta2 * (0 if v == None
+                                                                 else v)
+            self.m[para] = m_new.detach()
+            self.v[para] = v_new.detach()
+
+            lr_t = self.lr 
+            # lr_t = self.lr * sqrt(1 - self.beta2**self.t) / (1 -
+            #                                                self.beta1**self.t)
+            m_t = (m_new / (1 - (self.beta1**self.t))).detach()
+            v_t = (v_new / (1 - (self.beta2**self.t))).detach()
+
+            para.cached_data -= lr_t * (
+                (m_t / ((v_t**0.5) + self.eps)) +
+                self.weight_decay * para.detach()).cached_data
+
         ### END YOUR SOLUTION

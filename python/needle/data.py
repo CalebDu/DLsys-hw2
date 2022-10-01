@@ -115,16 +115,29 @@ class DataLoader:
             self.ordering = np.array_split(
                 np.arange(len(dataset)),
                 range(batch_size, len(dataset), batch_size))
+        else:
+            self.ordering = np.array_split(
+                np.random.shuffle(np.arange(len(dataset))),
+                range(batch_size,
+                      len(dataset).batch_size))
+        self.idx = -1
 
     def __iter__(self):
         ### BEGIN YOUR SOLUTION ###
-        raise NotImplementedError()  ###
+
         ### END YOUR SOLUTION
         return self
 
     def __next__(self):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        self.idx += 1
+        if self.idx >= len(self.ordering):
+            raise StopIteration()
+        idx = self.ordering[self.idx]
+        samples = [self.dataset[i] for i in idx]
+        samples = list(zip(*samples))
+        return [Tensor(x) for x in samples]
+
         ### END YOUR SOLUTION
 
 
