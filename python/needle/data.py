@@ -1,6 +1,7 @@
 import numpy as np
 from .autograd import Tensor
-
+import struct
+import gzip
 from typing import Iterator, Optional, List, Sized, Union, Iterable, Any
 
 
@@ -136,17 +137,30 @@ class MNISTDataset(Dataset):
         transforms: Optional[List] = None,
     ):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        super().__init__(transforms)
+        with gzip.open(image_filename) as file:
+            magic, num, rows, cols = struct.unpack(">IIII", file.read(16))
+            self.images = np.fromstring(file.read(),
+                                        dtype=np.uint8).reshape(-1, 784)
+        with gzip.open(label_filename) as file:
+            magic, n = struct.unpack(">II", file.read(8))
+            self.labels = np.fromstring(file.read(), dtype=np.uint8)
+
+        self.images = np.float32(self.images) / 255.
         ### END YOUR SOLUTION
 
     def __getitem__(self, index) -> object:
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        img = self.images[index].reshape((28, 28, 1))
+        if self.transforms:
+            for tsf in self.transforms:
+                img = tsf(img)
+        return [img, self.labels[index]]
         ### END YOUR SOLUTION
 
     def __len__(self) -> int:
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return len(self.images)
         ### END YOUR SOLUTION
 
 
