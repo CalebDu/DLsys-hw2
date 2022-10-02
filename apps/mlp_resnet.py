@@ -28,7 +28,15 @@ def MLPResNet(dim,
               norm=nn.BatchNorm1d,
               drop_prob=0.1):
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    # blocks = nn.Sequential()
+    resnet = nn.Sequential(
+        nn.Linear(in_features=dim, out_features=hidden_dim), nn.ReLU(), *[
+            ResidualBlock(dim=hidden_dim,
+                          hidden_dim=hidden_dim // 2,
+                          norm=norm,
+                          drop_prob=drop_prob) for _ in range(num_blocks)
+        ], nn.Linear(in_features=hidden_dim, out_features=num_classes))
+    return resnet
     ### END YOUR SOLUTION
 
 
