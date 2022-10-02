@@ -253,7 +253,7 @@ class Dropout(Module):
             return x
         else:
             # idenity function in eval mode
-            return x * self.p
+            return x 
         ### END YOUR SOLUTION
 
 

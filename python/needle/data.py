@@ -133,6 +133,13 @@ class DataLoader:
         ### BEGIN YOUR SOLUTION
         self.idx += 1
         if self.idx >= len(self.ordering):
+            self.idx = -1
+            if self.shuffle:
+                arr = np.arange(len(self.dataset))
+                np.random.shuffle(arr)
+                self.ordering = np.array_split(
+                    arr,
+                    range(self.batch_size, len(self.dataset), self.batch_size))
             raise StopIteration()
         samples = self.dataset[self.ordering[self.idx]]
         # samples = list(zip(*samples))
