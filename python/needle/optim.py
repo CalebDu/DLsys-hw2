@@ -35,7 +35,7 @@ class SGD(Optimizer):
                 0 if u == None else u)
             id = para.detach()
             self.u[para] = u_new
-            d_para = u_new + self.weight_decay * id
+            d_para = u_new 
             para.cached_data -= (self.lr * d_para).cached_data
         ### END YOUR SOLUTION
 
