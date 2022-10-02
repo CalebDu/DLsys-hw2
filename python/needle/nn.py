@@ -206,9 +206,8 @@ class BatchNorm1d(Module):
             return ret
         else:
             mean = ops.broadcast_to(self.running_mean, x.shape)
-            var = ((x - mean)**2).sum(0).reshape((1, n_feature)) / n
-            ret = (x - mean) / ops.broadcast_to(
-                ops.power_scalar(var + self.eps, 0.5), x.shape) * w + b
+            var = ops.broadcast_to(self.running_var, x.shape)
+            ret = (x - mean) / ((var + self.eps)**0.5) * w + b
             return ret
         ### END YOUR SOLUTION
 
