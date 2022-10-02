@@ -2,6 +2,7 @@
 from math import sqrt
 import needle as ndl
 import numpy as np
+import torch.optim.adam
 
 
 class Optimizer:
@@ -30,7 +31,7 @@ class SGD(Optimizer):
         ### BEGIN YOUR SOLUTION
         for para in self.params:
             u = self.u.get(para)
-            grad = para.grad.detach()
+            grad = para.grad.detach() + self.weight_decay * para.detach()
             u_new = grad * (1 - self.momentum) + self.momentum * (
                 0 if u == None else u)
             id = para.detach()
@@ -68,22 +69,17 @@ class Adam(Optimizer):
         for para in self.params:
             m = self.m.get(para)
             v = self.v.get(para)
-            grad = para.grad.detach()
+            grad = para.grad.detach() + self.weight_decay * para.detach()
             m_new = (1 -
                      self.beta1) * grad + self.beta1 * (0 if m == None else m)
             v_new = (1 - self.beta2) * (grad**2) + self.beta2 * (0 if v == None
                                                                  else v)
-            self.m[para] = m_new.detach()
-            self.v[para] = v_new.detach()
+            self.m[para] = m_new
+            self.v[para] = v_new
 
-            lr_t = self.lr 
-            # lr_t = self.lr * sqrt(1 - self.beta2**self.t) / (1 -
-            #                                                self.beta1**self.t)
-            m_t = (m_new / (1 - (self.beta1**self.t))).detach()
-            v_t = (v_new / (1 - (self.beta2**self.t))).detach()
-
-            para.cached_data -= lr_t * (
-                (m_t / ((v_t**0.5) + self.eps)) +
-                self.weight_decay * para.detach()).cached_data
+            m_new = (m_new / (1 - (self.beta1**self.t))).detach()
+            v_new = (v_new / (1 - (self.beta2**self.t))).detach()
+            para.cached_data -= self.lr * ((m_new / (
+                (v_new**0.5) + self.eps))).cached_data
 
         ### END YOUR SOLUTION
