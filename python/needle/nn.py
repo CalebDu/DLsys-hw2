@@ -207,7 +207,7 @@ class BatchNorm1d(Module):
         else:
             mean = ops.broadcast_to(self.running_mean, x.shape)
             var = ops.broadcast_to(self.running_var, x.shape)
-            ret = (x - mean) / ((var + self.eps)**0.5) * w + b
+            ret = w * (x - mean) / ((var + self.eps)**0.5) + b
             return ret
         ### END YOUR SOLUTION
 
@@ -253,7 +253,7 @@ class Dropout(Module):
             return x
         else:
             # idenity function in eval mode
-            return x 
+            return x
         ### END YOUR SOLUTION
 
 
