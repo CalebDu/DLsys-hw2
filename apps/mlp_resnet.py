@@ -41,7 +41,7 @@ def MLPResNet(dim,
     ### END YOUR SOLUTION
 
 
-# TODO bug about computing accuracy
+
 def epoch(dataloader, model, opt=None):
     np.random.seed(4)
     ### BEGIN YOUR SOLUTION
@@ -50,40 +50,26 @@ def epoch(dataloader, model, opt=None):
     acc_list = []
     if opt:
         model.train()
-        for i, batch in enumerate(dataloader):
-            x, y = batch[0], batch[1]
-            x = x.reshape((x.shape[0], -1))
-            y_hat = model(x)
-            logit = np.argmax(y_hat.cached_data, axis=1)
-            loss = loss_fn(y_hat, y)
-            loss_list.append(loss.cached_data)
-            correct = np.sum(logit == y.cached_data)
-            acc_list.append(correct / x.shape[0])
+    else: 
+        model.eval()
+    n_sample, correct = 0, 0
+    for i, batch in enumerate(dataloader):
+        x, y = batch[0], batch[1]
+        x = x.reshape((x.shape[0], -1))
+        y_hat = model(x)
+        logit = np.argmax(y_hat.cached_data, axis=1)
+        loss = loss_fn(y_hat, y)
+        loss_list.append(loss.cached_data)
+        correct += np.sum(logit == y.cached_data)
+        n_sample += x.shape[0]
+        acc_list.append(correct / x.shape[0])
+        if opt:
             opt.reset_grad()
             loss.backward()
             opt.step()
 
-        acc, loss = np.mean(acc_list), np.mean(loss_list)
-        return [acc, loss]
-    else:
-        model.eval()
-        n_sample = 0
-        correct = 0
-        for i, batch in enumerate(dataloader):
-            x, y = batch[0], batch[1]
-            n = x.shape[0]
-            n_sample += n
-            x = x.reshape((n, -1))
-            y_hat = model(x)
-            logit = np.argmax(y_hat.cached_data, axis=1)
-            loss = loss_fn(y_hat, y)
-            loss_list.append(loss.cached_data * n)
-            counter = np.sum(logit == y.cached_data)
-            correct += counter
-
-        acc, loss = correct / n_sample, np.sum(loss_list) / n_sample
-        return [acc, loss]
-
+    acc, loss = correct/n_sample, np.mean(loss_list)
+    return np.array([1 - acc, loss])
     ### END YOUR SOLUTION
 
 
