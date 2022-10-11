@@ -62,18 +62,9 @@ def epoch(dataloader, model, opt=None):
             opt.reset_grad()
             loss.backward()
             opt.step()
-        n_sample = 0
-        correct = 0
-        for i, batch in enumerate(dataloader):
-            x, y = batch[0], batch[1]
-            n_sample += x.shape[0]
-            x = x.reshape((x.shape[0], -1))
-            y_hat = model(x)
-            logit = np.argmax(y_hat.cached_data, axis=1)
-            correct += np.sum(logit == y.cached_data)
-        acc, loss = correct / n_sample, np.mean(loss_list)
-        # acc, loss = np.mean(acc_list), np.mean(loss_list)
-        return np.array([acc, loss])
+
+        acc, loss = np.mean(acc_list), np.mean(loss_list)
+        return [acc, loss]
     else:
         model.eval()
         n_sample = 0
@@ -91,7 +82,7 @@ def epoch(dataloader, model, opt=None):
             correct += counter
 
         acc, loss = correct / n_sample, np.sum(loss_list) / n_sample
-        return np.array([acc, loss])
+        return [acc, loss]
 
     ### END YOUR SOLUTION
 
@@ -105,7 +96,23 @@ def train_mnist(batch_size=100,
                 data_dir="data"):
     np.random.seed(4)
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    mnist_train_dataset = ndl.data.MNISTDataset("data/train-images-idx3-ubyte.gz",
+                                                "data/train-labels-idx1-ubyte.gz")
+    mnist_train_dataloader = ndl.data.DataLoader(dataset=mnist_train_dataset,
+                                                 batch_size=batch_size,
+                                                 shuffle=True)
+    mnist_test_dataset = ndl.data.MNISTDataset("data/t10k-images-idx3-ubyte.gz",
+                                               "data/t10k-labels-idx1-ubyte.gz")
+    mnist_test_dataloader = ndl.data.DataLoader(dataset=mnist_test_dataset,
+                                                batch_size=batch_size,
+                                                shuffle=False)
+    resnet = MLPResNet(784, hidden_dim)
+
+    opt = optimizer(resnet.parameters(), lr=lr, weight_decay=weight_decay)
+    for i in range(epochs):
+        train_acc, train_loss = epoch(dataloader=mnist_train_dataloader, model=resnet, opt=opt)
+        test_acc, test_loss = epoch(dataloader=mnist_test_dataloader, model=resnet)
+    return [train_acc, train_loss, test_acc, test_loss]
     ### END YOUR SOLUTION
 
 
